@@ -7,10 +7,10 @@ int32_t minX = 0;
 int32_t maxY = 230;
 int32_t minY = 0;
 
-int32_t PLAYER_SPEED = 6;
-int32_t MAX_AI_SPEED = 8;
+float PLAYER_SPEED = 6;
+float MAX_AI_SPEED = 2.0f;
 
-float MAX_BALL_SPEED = 4;
+float MAX_BALL_SPEED = 6;
 
 uint8_t BAT_GLOW_TIME = 45;
 
@@ -134,7 +134,7 @@ public:
 			spriteLocation = mainSprite;
 		}
 
-		int yMovement;
+		float yMovement;
 
 		if (this->isAi)
 		{
@@ -146,7 +146,7 @@ public:
 			{
 				yMovement = PlayerUpdate(DPAD_UP, DPAD_DOWN);
 
-				if(yMovement == 0)
+				if(yMovement == 0.0f)
 				{
 				yMovement =	PlayerUpdate(joystick.y);
 				}
@@ -157,13 +157,13 @@ public:
 			}
 		}
 		
-		this->loc.y = std::min((maxY - this->size.h), std::max((int32_t)0, loc.y + yMovement));
+		this->loc.y = std::min((maxY - this->size.h), std::max(static_cast<int32_t>(0), loc.y + static_cast<int32_t>(yMovement)));
 
 
 		// todo frames
 	}
 
-	int32_t PlayerUpdate(Button upButton, Button downButton)
+	float PlayerUpdate(Button upButton, Button downButton)
 	{
 
 		if (buttons & downButton)
@@ -178,7 +178,7 @@ public:
 		return 0;
 	}
 
-	int32_t PlayerUpdate(float y)
+	float PlayerUpdate(float y)
 	{
 
 		if (y > 0)
@@ -193,26 +193,26 @@ public:
 		return 0;
 	}
 
-	int32_t Ai(Point ballLocation, int8_t aiOffset, Size ballSize)
+	float Ai(Point ballLocation, int8_t aiOffset, Size ballSize)
 	{
 		auto xDistance = abs((ballLocation.x + (ballSize.w / 2)) - this->loc.x);
 
 		// Only follow the ball if close
 		if (xDistance < maxX / 2)
 		{
-			auto targetY1 = maxY / 2;
+			const auto targetY1 = maxY / 2;
 
-			auto targetY2 = (ballLocation.y + (ballSize.h / 2)) + aiOffset;
+			const auto targetY2 = (ballLocation.y + (ballSize.h / 2)) - (this->size.h / 2) + aiOffset;
 
-			auto weight1 = std::min((int32_t)1, xDistance / (maxX / (int32_t)2));
-			auto weight2 = 1 - weight1;
+			const auto weight1 = std::min(static_cast<int32_t>(1), xDistance / (maxX / static_cast<int32_t>(2)));
+			const auto weight2 = 1 - weight1;
 
-			auto targetY = (weight1 * targetY1) + (weight2 * targetY2);
+			const auto targetY = (weight1 * targetY1) + (weight2 * targetY2);
 
-			return std::min(MAX_AI_SPEED, std::max(-MAX_AI_SPEED, targetY - this->loc.y));
+			return std::min(MAX_AI_SPEED, std::max(-MAX_AI_SPEED, static_cast<float>(targetY - this->loc.y)));
 		}
-		// Head to center
-		else
+		
+		else // Head to center
 		{
 			if ((this->loc.y + this->size.h / 2) < maxY / 2)
 			{
@@ -259,7 +259,7 @@ public:
 		this->spriteLocation = Rect(0, 64 / 8, size.w / 8, size.h / 8);
 	}
 
-	float speed = 1;
+	float speed = 1.5;
 
 	bool Update(std::vector<Bat>& bats)
 	{
@@ -311,7 +311,7 @@ public:
 
 					if (speed < MAX_BALL_SPEED)
 					{
-						this->speed += 0.1;
+						this->speed += 0.1f;
 					}
 
 					// todo bat glow AI and sounds				
@@ -419,6 +419,7 @@ public:
 		if(hit == true)
 		{
 			vibrationTimer = BAT_GLOW_TIME / 2;
+			aiOffset = static_cast<int8_t>(blit::random() % 20) + -10;
 		}
 
 		for (Bat& bat : bats) {
@@ -514,9 +515,24 @@ void DrawGame()
 
 	screen.sprite(game.ball.GetSpriteLocation(), game.ball.GetLocation(), 0);
 
+	uint8_t player = 1;
+	
 	for (auto bat : game.bats)
 	{
 		screen.sprite(bat.GetSpriteLocation(), bat.GetLocation(), 0);
+
+		screen.pen = Pen(0, 255, 0, 255);
+		
+		if (player == 1)
+		{
+			screen.text(std::to_string(bat.score), fat_font, Point(20, 10));
+		}
+		else
+		{
+			screen.text(std::to_string(bat.score), fat_font, Point(maxX - 30, 10));
+		}
+		
+		player++;
 	}
 }
 
@@ -533,9 +549,12 @@ void DrawGameOver()
 // amount if milliseconds elapsed since the start of your game
 //
 void render(uint32_t time) {
-
+	screen.pen = Pen(0, 0, 0, 255);
+	//screen.mask = nullptr;
+	
 	// clear the screen -- screen is a reference to the frame buffer and can be used to draw all things with the 32blit
 	screen.clear();
+	
 
 	switch (state)
 	{
