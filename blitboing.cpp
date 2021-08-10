@@ -358,12 +358,12 @@ int8_t noPlayers = 1;
 uint8_t maxScore = 5;
 
 enum GameState {
-	Menu,
+	MainMenu,
 	Play,
 	GameOver
 };
 
-GameState state = Menu;
+GameState state = MainMenu;
 SpriteSheet* backGroundSurface;
 SpriteSheet* menu0ss;
 SpriteSheet* menu1ss;
@@ -558,7 +558,7 @@ void render(uint32_t time) {
 
 	switch (state)
 	{
-	case Menu:
+	case MainMenu:
 		DrawMenu();
 		break;
 	case Play:
@@ -588,7 +588,7 @@ void update(uint32_t time) {
 
 	switch (state)
 	{
-	case Menu:
+	case MainMenu:
 		if (buttons & Button::A)
 		{
 			game = Game(noPlayers);
@@ -614,7 +614,7 @@ void update(uint32_t time) {
 	case GameOver:
 		if (buttons & Button::A)
 		{
-			state = Menu;
+			state = MainMenu;
 		}
 		break;
 	}
